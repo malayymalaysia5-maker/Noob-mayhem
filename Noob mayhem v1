@@ -1,0 +1,131 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Ultimate Exploit Menu V3",
+   LoadingTitle = "Loading Features...",
+   LoadingSubtitle = "by Gemini and Fadzz",
+   ConfigurationSaving = { Enabled = true, FolderName = "GeminiHub", FileName = "UltimateConfigV3" },
+   KeySystem = false
+})
+
+-- Variables
+local Player = game.Players.LocalPlayer
+local KillAuraEnabled = false
+local KillAuraRange = 500
+local HitDelay = 0.1
+local FlyEnabled = false
+local FlySpeed = 10 -- Default speed set to 10
+local ESPEnabled = false
+
+--- TAB: COMBAT ---
+local CombatTab = Window:CreateTab("Combat", 4483362458)
+
+CombatTab:CreateToggle({
+   Name = "Kill Aura (Target Both: Player & NPC)",
+   CurrentValue = false,
+   Callback = function(Value)
+      KillAuraEnabled = Value
+      if KillAuraEnabled then
+          task.spawn(function()
+              while KillAuraEnabled do
+                  task.wait(HitDelay)
+                  pcall(function()
+                      local hrp = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+                      if not hrp then return end
+                      for _, obj in pairs(workspace:GetDescendants()) do
+                          if obj:IsA("Model") and obj ~= Player.Character then
+                              local targetHrp = obj:FindFirstChild("HumanoidRootPart")
+                              if targetHrp and (hrp.Position - targetHrp.Position).Magnitude <= KillAuraRange then
+                                  local tool = Player.Character:FindFirstChildOfClass("Tool") or Player.Backpack:FindFirstChildOfClass("Tool")
+                                  if tool then tool:Activate() end
+                              end
+                          end
+                      end
+                  end)
+              end
+          end)
+      end
+   end,
+})
+
+CombatTab:CreateSlider({
+   Name = "Aura Range",
+   Min = 10, Max = 2000, CurrentValue = 500,
+   Callback = function(Value) KillAuraRange = Value end,
+})
+
+CombatTab:CreateSlider({
+   Name = "Hit Delay (Seconds)",
+   Min = 0.05, Max = 1, CurrentValue = 0.1,
+   Callback = function(Value) HitDelay = Value end,
+})
+
+--- TAB: MOVEMENT ---
+local MovementTab = Window:CreateTab("Movement", 4483362458)
+
+MovementTab:CreateToggle({
+   Name = "Fly Mode",
+   CurrentValue = false,
+   Callback = function(Value)
+      FlyEnabled = Value
+      if FlyEnabled then
+          task.spawn(function()
+              local hrp = Player.Character:WaitForChild("HumanoidRootPart")
+              local bv = Instance.new("BodyVelocity", hrp)
+              bv.Velocity = Vector3.new(0,0,0)
+              bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+              
+              while FlyEnabled do
+                  task.wait()
+                  local dir = Vector3.new(0,0,0)
+                  local cam = workspace.CurrentCamera.CFrame
+                  if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.LookVector end
+                  if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.LookVector end
+                  if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.RightVector end
+                  if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.RightVector end
+                  bv.Velocity = dir * FlySpeed
+              end
+              bv:Destroy()
+          end)
+      end
+   end,
+})
+
+MovementTab:CreateSlider({
+   Name = "Fly Speed",
+   Min = 1,    
+   Max = 300,  
+   CurrentValue = 10, -- Starts at 10 as requested
+   Callback = function(Value) FlySpeed = Value end,
+})
+
+--- TAB: VISUALS ---
+local VisualsTab = Window:CreateTab("Visuals", 4483362458)
+
+VisualsTab:CreateToggle({
+   Name = "ESP Both (Players & NPCs)",
+   CurrentValue = false,
+   Callback = function(Value)
+      ESPEnabled = Value
+      if ESPEnabled then
+          task.spawn(function()
+              while ESPEnabled do
+                  for _, obj in pairs(workspace:GetDescendants()) do
+                      if obj:IsA("Model") and (obj:FindFirstChild("Humanoid") or obj:FindFirstChildWhichIsA("BasePart")) and not obj:FindFirstChild("Universal_ESP") then
+                          if obj ~= Player.Character then
+                              local highlight = Instance.new("Highlight", obj)
+                              highlight.Name = "Universal_ESP"
+                              highlight.FillColor = Color3.fromRGB(0, 255, 255)
+                          end
+                      end
+                  end
+                  task.wait(2)
+              end
+          end)
+      else
+          for _, h in pairs(workspace:GetDescendants()) do
+              if h.Name == "Universal_ESP" then h:Destroy() end
+          end
+      end
+   end,
+})
